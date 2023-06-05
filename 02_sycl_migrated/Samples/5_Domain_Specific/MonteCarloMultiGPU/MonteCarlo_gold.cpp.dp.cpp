@@ -105,27 +105,17 @@ extern "C" void MonteCarloCPU(TOptionValue &callValue, TOptionData optionData,
   float *samples;
   dpct::rng::host_rng_ptr gen;
 
-  /*
-  DPCT1003:25: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
   gen =
       dpct::rng::create_host_rng(dpct::rng::random_engine_type::philox4x32x10);
   unsigned long long seed = 1234ULL;
-  /*
-  DPCT1003:26: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   gen->set_seed(seed);
 
   if (h_Samples != NULL) {
     samples = h_Samples;
   } else {
     samples = (float *)malloc(pathN * sizeof(float));
-    /*
-    DPCT1003:27: Migrated API does not return error code. (*, 0) is inserted.
-    You may need to rewrite this code.
-    */
+    
     gen->generate_gaussian(samples, pathN, 0.0, 1.0);
   }
 
@@ -142,10 +132,7 @@ extern "C" void MonteCarloCPU(TOptionValue &callValue, TOptionData optionData,
 
   if (h_Samples == NULL) free(samples);
 
-  /*
-  DPCT1003:28: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+
   gen.reset();
 
   // Derive average from the total sum and discount by riskfree rate
