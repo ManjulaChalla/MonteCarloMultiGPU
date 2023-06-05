@@ -32,7 +32,7 @@
 //#include <dpct/dpct.hpp>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <cooperative_groups.h>
+
 
 #include <helper_cuda.h>
 
@@ -85,10 +85,7 @@ inline double endCallValue(double S, double X, double r, double MuByT,
 // block is high enough to keep the GPU busy.
 ////////////////////////////////////////////////////////////////////////////////
 static void MonteCarloOneBlockPerOption(
-    /*
-    DPCT1032:29: A different random number generator is used. You may need to
-    adjust the code.
-    */
+    
     oneapi::mkl::rng::device::philox4x32x10<1> *__restrict rngStates,
     const __TOptionData *__restrict d_OptionData,
     __TOptionValue *__restrict d_CallValue, int pathN, int optionN,
@@ -104,10 +101,7 @@ static void MonteCarloOneBlockPerOption(
             item_ct1.get_group(2) * item_ct1.get_local_range(2);
 
   // Copy random number state to local memory for efficiency
-  /*
-  DPCT1032:30: A different random number generator is used. You may need to
-  adjust the code.
-  */
+  
   oneapi::mkl::rng::device::philox4x32x10<1> localState = rngStates[tid];
   for (int optionIndex = item_ct1.get_group(2); optionIndex < optionN;
        optionIndex += item_ct1.get_group_range(2)) {
@@ -138,21 +132,13 @@ static void MonteCarloOneBlockPerOption(
 
     // Reduce shared memory accumulators
     // and write final result to global memory
-    /*
-    DPCT1065:3: Consider replacing sycl::nd_item::barrier() with
-    sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-    performance if there is no access to global memory.
-    */
+    
     item_ct1.barrier();
     sumReduce<real, SUM_N, THREAD_N>(s_SumCall, s_Sum2Call, cta, tile32,
                                      &d_CallValue[optionIndex], item_ct1);
   }
 }
 
-/*
-DPCT1032:31: A different random number generator is used. You may need to adjust
-the code.
-*/
 static void rngSetupStates(oneapi::mkl::rng::device::philox4x32x10<1> *rngState,
                            int device_id, const sycl::nd_item<3> &item_ct1) {
   // determine global thread id
@@ -170,43 +156,25 @@ static void rngSetupStates(oneapi::mkl::rng::device::philox4x32x10<1> *rngState,
 ////////////////////////////////////////////////////////////////////////////////
 
 extern "C" void initMonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
-  /*
-  DPCT1003:32: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   plan->d_OptionData = (void *)sycl::malloc_device(
       sizeof(__TOptionData) * (plan->optionCount), *stream);
-  /*
-  DPCT1003:33: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   plan->d_CallValue = (void *)sycl::malloc_device(
       sizeof(__TOptionValue) * (plan->optionCount), *stream);
-  /*
-  DPCT1003:34: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+ 
   plan->h_OptionData = (void *)sycl::malloc_host(
       sizeof(__TOptionData) * (plan->optionCount), *stream);
   // Allocate internal device memory
-  /*
-  DPCT1003:35: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   plan->h_CallValue =
       sycl::malloc_host<__TOptionValue>((plan->optionCount), *stream);
   // Allocate states for pseudo random number generators
-  /*
-  DPCT1003:36: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   plan->rngStates =
       sycl::malloc_device<oneapi::mkl::rng::device::philox4x32x10<1>>(
           plan->gridSize * THREAD_N, *stream);
-  /*
-  DPCT1003:38: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   stream
       ->memset(plan->rngStates, 0,
                plan->gridSize * THREAD_N *
@@ -246,30 +214,15 @@ extern "C" void closeMonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
         (float)(exp(-RT) * 1.96 * stdDev / sqrt(pathN));
   }
 
-  /*
-  DPCT1003:40: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   sycl::free(plan->rngStates, *stream);
-  /*
-  DPCT1003:41: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   sycl::free(plan->h_CallValue, *stream);
-  /*
-  DPCT1003:42: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   sycl::free(plan->h_OptionData, *stream);
-  /*
-  DPCT1003:43: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   sycl::free(plan->d_CallValue, *stream);
-  /*
-  DPCT1003:44: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   sycl::free(plan->d_OptionData, *stream);
 }
 
@@ -296,24 +249,15 @@ extern "C" void MonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
     h_OptionData[i].VBySqrtT = (real)VBySqrtT;
   }
 
-  /*
-  DPCT1003:45: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+
   stream->memcpy(plan->d_OptionData, h_OptionData,
                  plan->optionCount * sizeof(__TOptionData));
 
   stream->submit([&](sycl::handler &cgh) {
-    /*
-    DPCT1101:79: 'SUM_N' expression was replaced with a value. Modify the code
-    to use the original expression, provided in comments, if it is correct.
-    */
+    
     sycl::local_accessor<real, 1> s_SumCall_acc_ct1(
         sycl::range<1>(256 /*SUM_N*/), cgh);
-    /*
-    DPCT1101:80: 'SUM_N' expression was replaced with a value. Modify the code
-    to use the original expression, provided in comments, if it is correct.
-    */
+   
     sycl::local_accessor<real, 1> s_Sum2Call_acc_ct1(
         sycl::range<1>(256 /*SUM_N*/), cgh);
 
@@ -337,10 +281,7 @@ extern "C" void MonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
   });
   getLastCudaError("MonteCarloOneBlockPerOption() execution failed\n");
 
-  /*
-  DPCT1003:46: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+  
   stream->memcpy(h_CallValue, plan->d_CallValue,
                  plan->optionCount * sizeof(__TOptionValue));
 
