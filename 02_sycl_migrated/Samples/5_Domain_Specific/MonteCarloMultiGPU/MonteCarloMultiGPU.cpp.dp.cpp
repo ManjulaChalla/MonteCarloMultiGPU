@@ -32,7 +32,6 @@
  */
 
 #include <sycl/sycl.hpp>
-//#include <dpct/dpct.hpp>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,10 +257,7 @@ int main(int argc, char **argv) {
 
   // GPU number present in the system
   int GPU_N;
-  /*
-  DPCT1003:74: Migrated API does not return error code. (*, 0) is inserted. You
-  may need to rewrite this code.
-  */
+ 
   GPU_N =
       (cl::sycl::device::get_devices(cl::sycl::info::device_type::all)).size();
   int nOptions = 8 * 1024;
