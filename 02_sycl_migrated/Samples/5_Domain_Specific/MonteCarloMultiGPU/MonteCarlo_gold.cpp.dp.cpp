@@ -108,14 +108,14 @@ extern "C" void MonteCarloCPU(TOptionValue &callValue, TOptionData optionData,
   gen =
       dpct::rng::create_host_rng(dpct::rng::random_engine_type::philox4x32x10);
   unsigned long long seed = 1234ULL;
-  
+
   gen->set_seed(seed);
 
   if (h_Samples != NULL) {
     samples = h_Samples;
   } else {
     samples = (float *)malloc(pathN * sizeof(float));
-    
+
     gen->generate_gaussian(samples, pathN, 0.0, 1.0);
   }
 
@@ -131,7 +131,6 @@ extern "C" void MonteCarloCPU(TOptionValue &callValue, TOptionData optionData,
   }
 
   if (h_Samples == NULL) free(samples);
-
 
   gen.reset();
 

@@ -30,11 +30,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <sycl/sycl.hpp>
 //#include <dpct/dpct.hpp>
+#include <helper_cuda.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-
-#include <helper_cuda.h>
 
 #include <oneapi/mkl.hpp>
 #include <oneapi/mkl/rng/device.hpp>
@@ -85,7 +83,7 @@ inline double endCallValue(double S, double X, double r, double MuByT,
 // block is high enough to keep the GPU busy.
 ////////////////////////////////////////////////////////////////////////////////
 static void MonteCarloOneBlockPerOption(
-    
+
     oneapi::mkl::rng::device::philox4x32x10<1> *__restrict rngStates,
     const __TOptionData *__restrict d_OptionData,
     __TOptionValue *__restrict d_CallValue, int pathN, int optionN,
@@ -101,7 +99,7 @@ static void MonteCarloOneBlockPerOption(
             item_ct1.get_group(2) * item_ct1.get_local_range(2);
 
   // Copy random number state to local memory for efficiency
-  
+
   oneapi::mkl::rng::device::philox4x32x10<1> localState = rngStates[tid];
   for (int optionIndex = item_ct1.get_group(2); optionIndex < optionN;
        optionIndex += item_ct1.get_group_range(2)) {
@@ -132,7 +130,7 @@ static void MonteCarloOneBlockPerOption(
 
     // Reduce shared memory accumulators
     // and write final result to global memory
-    
+
     item_ct1.barrier();
     sumReduce<real, SUM_N, THREAD_N>(s_SumCall, s_Sum2Call, cta, tile32,
                                      &d_CallValue[optionIndex], item_ct1);
@@ -156,25 +154,24 @@ static void rngSetupStates(oneapi::mkl::rng::device::philox4x32x10<1> *rngState,
 ////////////////////////////////////////////////////////////////////////////////
 
 extern "C" void initMonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
-  
   plan->d_OptionData = (void *)sycl::malloc_device(
       sizeof(__TOptionData) * (plan->optionCount), *stream);
-  
+
   plan->d_CallValue = (void *)sycl::malloc_device(
       sizeof(__TOptionValue) * (plan->optionCount), *stream);
- 
+
   plan->h_OptionData = (void *)sycl::malloc_host(
       sizeof(__TOptionData) * (plan->optionCount), *stream);
   // Allocate internal device memory
-  
+
   plan->h_CallValue =
       sycl::malloc_host<__TOptionValue>((plan->optionCount), *stream);
   // Allocate states for pseudo random number generators
-  
+
   plan->rngStates =
       sycl::malloc_device<oneapi::mkl::rng::device::philox4x32x10<1>>(
           plan->gridSize * THREAD_N, *stream);
-  
+
   stream
       ->memset(plan->rngStates, 0,
                plan->gridSize * THREAD_N *
@@ -214,15 +211,14 @@ extern "C" void closeMonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
         (float)(exp(-RT) * 1.96 * stdDev / sqrt(pathN));
   }
 
-  
   sycl::free(plan->rngStates, *stream);
-  
+
   sycl::free(plan->h_CallValue, *stream);
-  
+
   sycl::free(plan->h_OptionData, *stream);
-  
+
   sycl::free(plan->d_CallValue, *stream);
-  
+
   sycl::free(plan->d_OptionData, *stream);
 }
 
@@ -249,15 +245,13 @@ extern "C" void MonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
     h_OptionData[i].VBySqrtT = (real)VBySqrtT;
   }
 
-
   stream->memcpy(plan->d_OptionData, h_OptionData,
                  plan->optionCount * sizeof(__TOptionData));
 
   stream->submit([&](sycl::handler &cgh) {
-    
     sycl::local_accessor<real, 1> s_SumCall_acc_ct1(
         sycl::range<1>(256 /*SUM_N*/), cgh);
-   
+
     sycl::local_accessor<real, 1> s_Sum2Call_acc_ct1(
         sycl::range<1>(256 /*SUM_N*/), cgh);
 
@@ -281,7 +275,6 @@ extern "C" void MonteCarloGPU(TOptionPlan *plan, sycl::queue *stream) {
   });
   getLastCudaError("MonteCarloOneBlockPerOption() execution failed\n");
 
-  
   stream->memcpy(h_CallValue, plan->d_CallValue,
                  plan->optionCount * sizeof(__TOptionValue));
 

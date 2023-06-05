@@ -31,11 +31,12 @@
  * See supplied whitepaper for more explanations.
  */
 
-#include <sycl/sycl.hpp>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <sycl/sycl.hpp>
 
 // includes, project
 #include <helper_cuda.h>  // helper functions (cuda error checking and initialization)
@@ -257,7 +258,7 @@ int main(int argc, char **argv) {
 
   // GPU number present in the system
   int GPU_N;
- 
+
   GPU_N =
       (cl::sycl::device::get_devices(cl::sycl::info::device_type::all)).size();
   int nOptions = 8 * 1024;
