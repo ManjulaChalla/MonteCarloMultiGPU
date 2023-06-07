@@ -119,13 +119,7 @@ Perform the following steps:
    ```
 
     By default, this command sequence will build the `01_dpct_output`and `02_sycl_migrated` versions of the program.
-3. Run `01_dpct_output` for CPU and GPU.
-     ```
-    make run_cpu
-    make run_gpu (runs on Level-Zero Backend)
-    make run_gpu_opencl (runs on OpenCL Backend)
-    ```
-4. Run `02_sycl_migrated` for CPU and GPU.
+3. Run `02_sycl_migrated` for CPU and GPU.
      ```
     make run_sm_cpu
     make run_sm_gpu (runs on Level-Zero Backend)
